@@ -1,0 +1,2268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SmartCell — Battery Testing System</title>
+  <meta name="description" content="Arduino Uno + INA219 + DS18B20 USB Serial Battery Testing & Screening Dashboard." />
+
+  <!-- Preconnect to CDN -->
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" />
+
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+
+  <!-- Application Stylesheet -->
+  <link rel="stylesheet" href="./src/styles.css" />
+</head>
+<body>
+
+  <div class="smartcell-app">
+
+    <!-- 1. SmartCell Sidebar Navigation -->
+    <aside class="sidebar" id="appSidebar" aria-label="SmartCell Navigation">
+      <div>
+        <div class="sidebar-header">
+          <div class="brand-icon" aria-hidden="true">
+            <!-- Battery with Lightning Bolt SVG Icon -->
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="2" y="7" width="16" height="10" rx="2" ry="2"></rect>
+              <line x1="22" y1="11" x2="22" y2="13"></line>
+              <polyline points="11 9 9 12 13 12 11 15"></polyline>
+            </svg>
+          </div>
+          <div>
+            <h1 class="brand-title">SmartCell</h1>
+            <p class="brand-subtitle">Battery Testing System</p>
+          </div>
+        </div>
+
+        <nav>
+          <ul class="sidebar-menu">
+            <li>
+              <a class="nav-link active" data-tab="dashboard">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+                <span>Dashboard</span>
+              </a>
+            </li>
+            <li>
+              <a class="nav-link" data-tab="test">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+                <span>Test battery</span>
+              </a>
+            </li>
+            <li>
+              <a class="nav-link" data-tab="connections">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v6m0 8v6M2 12h6m8 0h6M5 5l4 4m6 6l4 4M19 5l-4 4m-6 6l-4 4"></path></svg>
+                <span>Connections</span>
+              </a>
+            </li>
+            <li>
+              <a class="nav-link" data-tab="history">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                <span>Test history</span>
+              </a>
+            </li>
+            <li>
+              <a class="nav-link" data-tab="types">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="16" height="10" rx="2" ry="2"></rect><line x1="22" y1="11" x2="22" y2="13"></line></svg>
+                <span>Battery types</span>
+              </a>
+            </li>
+            <li>
+              <a class="nav-link" data-tab="analytics">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+                <span>Analytics</span>
+              </a>
+            </li>
+            <li>
+              <a class="nav-link" data-tab="settings">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                <span>Settings</span>
+              </a>
+            </li>
+            <li>
+              <a class="nav-link" data-tab="about">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                <span>About project</span>
+              </a>
+            </li>
+          </ul>
+        </nav>
+      </div>
+
+      <div class="sidebar-footer">
+        <div class="hardware-pill">
+          <span>Arduino Uno + INA219</span>
+          <span id="hwStatusDot" class="hw-status-dot" style="background-color: #94a3b8;"></span>
+        </div>
+      </div>
+    </aside>
+
+    <!-- 2. Main Wrapper -->
+    <div class="main-wrapper">
+
+      <!-- Top Header -->
+      <header class="top-header">
+        <div class="header-left">
+          <button id="btnToggleSidebar" class="sidebar-toggle-btn" aria-label="Toggle navigation">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+          </button>
+          <div class="header-title-box">
+            <h2 id="viewTitle">Dashboard</h2>
+            <p id="viewSubtitle">Live telemetry and real-time battery screening</p>
+          </div>
+        </div>
+
+        <div class="header-right">
+          <!-- Connection Status Pill -->
+          <div id="deviceStatusBadge" class="status-pill disconnected">
+            <span class="status-dot"></span>
+            <span id="deviceStatusText">Disconnected</span>
+          </div>
+
+          <!-- Port / Connection Selector -->
+          <select id="headerPortSelect" class="custom-select" style="max-width: 170px; padding: 0.35rem 0.5rem; font-size: 0.775rem;">
+            <option value="auto">Auto-detect COM</option>
+          </select>
+
+          <!-- Connect / Disconnect Buttons -->
+          <button id="btnConnectDevice" class="btn btn-connect" title="Connect Arduino Uno through USB serial">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+            Connect Device
+          </button>
+          <button id="btnDisconnectDevice" class="btn btn-disconnect" disabled title="Disconnect active serial session">
+            Disconnect
+          </button>
+        </div>
+      </header>
+
+      <!-- Content Body -->
+      <main class="content-body">
+
+        <!-- Error / Warning Notification Banner -->
+        <div id="appAlertBanner" class="banner banner-error" style="display: none; margin-bottom: 1.25rem;">
+          <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+            <span id="appAlertText">Sensor error detected.</span>
+          </div>
+          <button id="btnDismissAlert" class="btn btn-secondary" style="padding: 0.2rem 0.5rem; font-size: 0.725rem;">Dismiss</button>
+        </div>
+
+        <!-- =================================================================
+             VIEW 1: DASHBOARD
+             ================================================================= -->
+        <section id="view-dashboard" class="view-section active-view">
+
+          <!-- Chemistry Configuration Bar -->
+          <div class="overview-card" style="margin-bottom: 1.25rem; padding: 1rem 1.25rem;">
+            <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;">
+              <div style="display: flex; align-items: center; gap: 0.75rem;">
+                <div style="width: 32px; height: 32px; border-radius: var(--radius-sm); background: var(--purple-100); color: var(--purple-700); display: flex; align-items: center; justify-content: center;">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="16" height="10" rx="2" ry="2"></rect><line x1="22" y1="11" x2="22" y2="13"></line></svg>
+                </div>
+                <div>
+                  <h4 style="font-size: 0.85rem; font-weight: 700; color: var(--purple-900);">Target Battery Chemistry</h4>
+                  <p style="font-size: 0.725rem; color: var(--text-muted);">Voltage thresholds and reference capacity dictate evaluation baselines</p>
+                </div>
+              </div>
+              <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
+                <select id="selectBatteryChemistry" class="custom-select" style="width: auto; min-width: 260px;">
+                  <option value="liion" selected>18650 Lithium-Ion (3.7V Nominal, 4.2V Max)</option>
+                  <option value="lipo">Lithium Polymer Li-Po (3.7V Nominal)</option>
+                  <option value="nimh">Nickel-Metal Hydride Ni-MH (1.2V Nominal)</option>
+                  <option value="nicd">Nickel-Cadmium Ni-Cd (1.2V Nominal)</option>
+                  <option value="alkaline">Alkaline Primary Cell (1.5V Nominal)</option>
+                  <option value="leadacid">Lead-Acid SLA / AGM (12.0V Nominal)</option>
+                  <option value="lifepo4">LiFePO4 (3.2V Nominal, 3.65V Max)</option>
+                  <option value="custom">Custom Parameters</option>
+                </select>
+                <span id="chemistrySelectedTag" class="m-tag" style="padding: 0.35rem 0.65rem;">Li-ion 3.7V</span>
+              </div>
+            </div>
+            <div style="display: flex; justify-content: space-between; border-top: 1px solid var(--border-color); padding-top: 0.6rem; margin-top: 0.75rem; font-size: 0.75rem; color: var(--text-muted); flex-wrap: wrap; gap: 0.5rem;">
+              <span>Nominal: <strong id="specNominalV">3.70 V</strong></span>
+              <span>Full Charge: <strong id="specMaxV">4.20 V</strong></span>
+              <span>Cutoff: <strong id="specCutoffV">3.00 V</strong></span>
+              <span>Rint Benchmark: <strong id="specRintBenchmark">&lt; 90 m&Omega;</strong></span>
+              <span>Max Sag: <strong id="specMaxSag">10.0%</strong></span>
+            </div>
+          </div>
+
+          <!-- =================================================================
+               SEVEN FEATURE CARDS (Row 1: 4 Cards, Row 2: 3 Cards)
+               ================================================================= -->
+
+          <!-- Row 1: Four Cards -->
+          <div class="dashboard-grid-4">
+
+            <!-- Card 1: Battery Voltage -->
+            <article class="dash-card dash-card-voltage" id="cardBatteryVoltage">
+              <div class="dash-card-header">
+                <div class="dash-card-title-group">
+                  <span class="dash-card-title">Battery Voltage</span>
+                </div>
+                <span id="tagVoltageStatus" class="dash-card-tag">Idle</span>
+              </div>
+              <div class="dash-card-body">
+                <div class="dash-value-wrap">
+                  <span id="valBatteryVoltage" class="dash-main-value">0.000</span>
+                  <span class="dash-unit">V</span>
+                </div>
+              </div>
+              <div class="dash-card-footer">
+                <span>Configured Range: <strong id="valVoltageRange">3.0–4.2 V</strong></span>
+                <span id="valVoltageState">Idle</span>
+              </div>
+            </article>
+
+            <!-- Card 2: Measured Current -->
+            <article class="dash-card dash-card-current" id="cardMeasuredCurrent">
+              <div class="dash-card-header">
+                <div class="dash-card-title-group">
+                  <span class="dash-card-title">Measured Current</span>
+                </div>
+                <span id="tagCurrentStatus" class="dash-card-tag">No Load</span>
+              </div>
+              <div class="dash-card-body">
+                <div class="dash-value-wrap">
+                  <span id="valMeasuredCurrent" class="dash-main-value">0.00</span>
+                  <span class="dash-unit">mA</span>
+                </div>
+              </div>
+              <div class="dash-card-footer">
+                <span>Flow Rate: <strong id="valCurrentFlowRate">0.00 mA</strong></span>
+                <span id="valCurrentState">No Load</span>
+              </div>
+            </article>
+
+            <!-- Card 3: Calculated Power -->
+            <article class="dash-card dash-card-power" id="cardCalculatedPower">
+              <div class="dash-card-header">
+                <div class="dash-card-title-group">
+                  <span class="dash-card-title">Calculated Power</span>
+                </div>
+                <span class="dash-card-tag badge-formula">P = V &times; I</span>
+              </div>
+              <div class="dash-card-body">
+                <div class="dash-value-wrap">
+                  <span id="valCalculatedPower" class="dash-main-value">0.00</span>
+                  <span class="dash-unit">mW</span>
+                </div>
+              </div>
+              <div class="dash-card-footer">
+                <span>Power (Watts): <strong id="valPowerWatts">0.000 W</strong></span>
+                <span id="valPowerState">Idle / Standby</span>
+              </div>
+            </article>
+
+            <!-- Card 4: Battery Health -->
+            <article class="dash-card dash-card-health" id="cardBatteryHealth">
+              <div class="dash-card-header">
+                <div class="dash-card-title-group">
+                  <span class="dash-card-title">Battery Health</span>
+                </div>
+                <span id="healthBadge" class="health-badge health-unknown">UNKNOWN</span>
+              </div>
+              <div class="dash-card-body">
+                <div class="dash-value-wrap" style="align-items: baseline;">
+                  <span id="valRetention" class="dash-main-value" style="font-size: 1.85rem;">--</span>
+                  <span class="dash-sub-label">retention</span>
+                </div>
+                <div class="health-capacity-row">
+                  <span>Usable: <strong id="valUsableCap">-- mAh</strong></span>
+                  <span>Rated: <strong id="valRatedCap">500 mAh</strong></span>
+                  <span>80% Goal: <strong id="val80Goal">400 mAh</strong></span>
+                </div>
+                <div class="health-progress-track">
+                  <div id="healthProgressFill" class="health-progress-bar" style="width: 0%;"></div>
+                </div>
+                <p id="valHealthReason" class="health-explain-text">
+                  No valid capacity test completed. A controlled discharge test is required to evaluate health.
+                </p>
+                <div class="health-disclaimer-note">
+                  *Prototype classification criteria are not universal safety standards.
+                </div>
+              </div>
+              <div class="dash-card-footer" style="padding-top: 0.5rem;">
+                <span>Test: <strong id="valHealthTestStatus">Not Run</strong></span>
+                <button id="btnEvaluateTest" class="btn btn-secondary btn-sm" style="font-size: 0.725rem; padding: 0.25rem 0.65rem;">
+                  Evaluate Test
+                </button>
+              </div>
+            </article>
+
+          </div>
+
+          <!-- Row 2: Three Cards -->
+          <div class="dashboard-grid-3">
+
+            <!-- Card 5: Discharged Capacity -->
+            <article class="dash-card dash-card-capacity" id="cardDischargedCapacity">
+              <div class="dash-card-header">
+                <div class="dash-card-title-group">
+                  <span class="dash-card-title">Discharged Capacity</span>
+                  <span class="dash-card-formula">&int; I&middot;dt / 3600</span>
+                </div>
+                <span class="dash-card-tag badge-integrated">Integrated</span>
+              </div>
+              <div class="dash-card-body">
+                <div class="dash-value-wrap">
+                  <span id="valDischargedCapacity" class="dash-main-value">0.000</span>
+                  <span class="dash-unit">mAh</span>
+                </div>
+              </div>
+              <div class="dash-card-footer">
+                <span>Logged Samples: <strong id="valCapacitySamples">0 samples</strong></span>
+                <span>Coulomb Counting</span>
+              </div>
+            </article>
+
+            <!-- Card 6: Equivalent Full Cycles -->
+            <article class="dash-card dash-card-cycles" id="cardFullCycles">
+              <div class="dash-card-header">
+                <div class="dash-card-title-group">
+                  <span class="dash-card-title">Equivalent Full Cycles</span>
+                </div>
+                <span class="dash-card-tag badge-estimated">Estimated</span>
+              </div>
+              <div class="dash-card-body">
+                <div class="dash-value-wrap">
+                  <span id="valEquivalentCycles" class="dash-main-value">0.0000</span>
+                  <span class="dash-unit">cyc</span>
+                </div>
+                <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem;">
+                  Reference capacity: <strong id="valReferenceCapDisplay">500 mAh</strong>
+                </div>
+              </div>
+              <div class="dash-card-footer">
+                <span>Throughput Est.</span>
+                <span>Cycle Life</span>
+              </div>
+            </article>
+
+            <!-- Card 7: Monitoring Duration -->
+            <article class="dash-card dash-card-duration" id="cardMonitoringDuration">
+              <div class="dash-card-header">
+                <div class="dash-card-title-group">
+                  <span class="dash-card-title">Monitoring Duration</span>
+                </div>
+                <span id="tagDurationStatus" class="dash-card-tag badge-active">Active</span>
+              </div>
+              <div class="dash-card-body">
+                <div class="dash-value-wrap">
+                  <span id="valMonitoringDuration" class="dash-main-value" style="font-size: 1.85rem; letter-spacing: 0.05em;">00:00:00</span>
+                </div>
+                <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem;">
+                  Sample rate: <strong>1 Hz</strong> (9600 Baud)
+                </div>
+              </div>
+              <div class="dash-card-footer">
+                <span>Logged Records: <strong id="valDurationLoggedCount">0</strong></span>
+                <span id="valSessionState">Session Running</span>
+              </div>
+            </article>
+
+          </div>
+
+          <!-- Third Row: Real-time Telemetry Charts -->
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 1.5rem; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 0.5rem;">
+            <div style="font-size: 0.95rem; font-weight: 700; color: var(--purple-900); display: flex; align-items: center; gap: 0.5rem;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+              <span>Live Telemetry Waveforms</span>
+            </div>
+            <div style="display: flex; gap: 0.5rem; align-items: center;">
+              <button id="btnExportLiveTelemetryCsv" class="btn btn-secondary" style="font-size: 0.75rem; padding: 0.35rem 0.75rem;" title="Download live session telemetry data points as CSV">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                Export Waveforms (CSV)
+              </button>
+            </div>
+          </div>
+          <div class="charts-grid">
+            <!-- Voltage Real-time Chart -->
+            <div class="chart-card">
+              <div class="chart-header">
+                <div>
+                  <h4 class="card-title">Voltage History (Voc / Vload)</h4>
+                  <p style="font-size: 0.725rem; color: var(--text-muted);">Real-time terminal voltage in Volts (V)</p>
+                </div>
+                <div style="font-size: 0.725rem; color: var(--purple-700); font-family: var(--font-mono);">
+                  Latest: <span id="chartVocVal">-- V</span>
+                </div>
+              </div>
+              <div class="chart-canvas-wrapper">
+                <canvas id="voltageChartCanvas"></canvas>
+              </div>
+            </div>
+
+            <!-- Current & Temperature Chart -->
+            <div class="chart-card">
+              <div class="chart-header">
+                <div>
+                  <h4 class="card-title">Load Current History (mA)</h4>
+                  <p style="font-size: 0.725rem; color: var(--text-muted);">Discharge/load current from INA219 shunt</p>
+                </div>
+                <div style="font-size: 0.725rem; color: var(--mint-700); font-family: var(--font-mono);">
+                  Latest: <span id="chartCurrentVal">-- mA</span>
+                </div>
+              </div>
+              <div class="chart-canvas-wrapper">
+                <canvas id="currentChartCanvas"></canvas>
+              </div>
+            </div>
+          </div>
+
+          <!-- Temperature Chart Box -->
+          <div class="chart-card">
+            <div class="chart-header">
+              <div>
+                <h4 class="card-title">Battery Surface Temperature (&deg;C)</h4>
+                <p style="font-size: 0.725rem; color: var(--text-muted);">Real-time reading from DS18B20 digital thermal sensor</p>
+              </div>
+              <div style="font-size: 0.725rem; color: var(--amber-700); font-family: var(--font-mono);">
+                Latest: <span id="chartTempVal">-- &deg;C</span>
+              </div>
+            </div>
+            <div class="chart-canvas-wrapper" style="height: 180px;">
+              <canvas id="tempChartCanvas"></canvas>
+            </div>
+          </div>
+
+        </section>
+
+
+        <!-- =================================================================
+             VIEW 2: TEST BATTERY (Controlled 3-Second Pulse Test)
+             ================================================================= -->
+        <section id="view-test" class="view-section">
+          <div class="overview-card">
+            <h3 class="card-title" style="margin-bottom: 0.75rem;">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+              Controlled Load Test Procedure
+            </h3>
+            <p style="font-size: 0.825rem; color: var(--text-muted); line-height: 1.5; margin-bottom: 1rem;">
+              A controlled 3-second load test measures open-circuit voltage ($V_{oc}$), applies a brief load to capture under-load voltage ($V_{load}$) and current ($I_{load}$), then computes real-world voltage sag and internal resistance ($R_{int}$).
+            </p>
+
+            <!-- Safety Checklist -->
+            <div style="background-color: var(--purple-50); border: 1px solid var(--purple-200); border-radius: var(--radius-md); padding: 1rem; margin-bottom: 1.25rem;">
+              <h4 style="font-size: 0.85rem; font-weight: 700; color: var(--purple-900); margin-bottom: 0.5rem;">
+                Safety &amp; Hardware Verification Checklist:
+              </h4>
+              <ul style="font-size: 0.8rem; color: var(--text-main); margin-left: 1.25rem; display: flex; flex-direction: column; gap: 0.35rem;">
+                <li>MOSFET Gate is connected to Arduino Pin 7 via 100 &Omega; series resistor and 10 k&Omega; pulldown.</li>
+                <li>Power resistor or load circuit is sized properly to dissipate the test current.</li>
+                <li>DS18B20 temperature sensor is secured against the cell body.</li>
+                <li>Cell is securely seated in battery holder with clean, low-resistance contacts.</li>
+              </ul>
+            </div>
+
+            <!-- Test Controls Box -->
+            <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; padding: 1rem; background-color: var(--bg-subtle); border-radius: var(--radius-md);">
+              <div>
+                <div style="font-size: 0.875rem; font-weight: 700; color: var(--purple-900);">Selected Battery: <span id="testRunnerChemistryName">18650 Li-ion (3.7V)</span></div>
+                <div style="font-size: 0.775rem; color: var(--text-muted);">Target Pulse Duration: <strong>3.0 seconds</strong> (with automatic hardware cutoff)</div>
+              </div>
+              <div style="display: flex; gap: 0.75rem;">
+                <button id="btnStartPulseTest" class="btn btn-primary" style="padding: 0.65rem 1.25rem;">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                  Execute 3s Load Test
+                </button>
+              </div>
+            </div>
+
+            <!-- Progress Bar (Visible during test) -->
+            <div id="testProgressBarBox" style="display: none; margin-top: 1rem;">
+              <div style="display: flex; justify-content: space-between; font-size: 0.75rem; margin-bottom: 0.25rem;">
+                <span id="testProgressStatus">Applying test load...</span>
+                <span id="testProgressTime">0.0s / 3.0s</span>
+              </div>
+              <div style="width: 100%; height: 8px; background-color: var(--border-color); border-radius: 4px; overflow: hidden;">
+                <div id="testProgressBar" style="width: 0%; height: 100%; background-color: var(--purple-600); transition: width 0.1s linear;"></div>
+              </div>
+            </div>
+
+            <!-- Last Test Result Summary Box -->
+            <div id="testResultBox" style="display: none; margin-top: 1.25rem; border-top: 1px solid var(--border-color); padding-top: 1.25rem;">
+              <h4 style="font-size: 0.95rem; font-weight: 700; color: var(--purple-900); margin-bottom: 0.75rem;">
+                Test Results:
+              </h4>
+              <div class="specs-grid" style="grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));">
+                <div class="spec-cell">
+                  <div class="spec-cell-label">Voc</div>
+                  <div id="resVoc" class="spec-cell-val">-- V</div>
+                </div>
+                <div class="spec-cell">
+                  <div class="spec-cell-label">Vload</div>
+                  <div id="resVload" class="spec-cell-val">-- V</div>
+                </div>
+                <div class="spec-cell">
+                  <div class="spec-cell-label">Current</div>
+                  <div id="resCurrent" class="spec-cell-val">-- A</div>
+                </div>
+                <div class="spec-cell">
+                  <div class="spec-cell-label">Sag</div>
+                  <div id="resSag" class="spec-cell-val">-- %</div>
+                </div>
+                <div class="spec-cell">
+                  <div class="spec-cell-label">Internal R</div>
+                  <div id="resRint" class="spec-cell-val">-- m&Omega;</div>
+                </div>
+                <div class="spec-cell">
+                  <div class="spec-cell-label">Assessment</div>
+                  <div id="resAssessment" class="spec-cell-val">--</div>
+                </div>
+              </div>
+
+              <div style="display: flex; justify-content: flex-end; margin-top: 1rem; gap: 0.75rem; flex-wrap: wrap;">
+                <button id="btnExportTestRunCsv" class="btn btn-secondary">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                  Export Test (CSV)
+                </button>
+                <button id="btnSaveTestResult" class="btn btn-primary">
+                  Save to Test History
+                </button>
+              </div>
+            </div>
+
+          </div>
+        </section>
+
+
+        <!-- =================================================================
+             VIEW: HARDWARE CONNECTIONS
+             ================================================================= -->
+        <section id="view-connections" class="view-section">
+
+          <!-- 1. Connections Overview Status Grid -->
+          <div class="connection-overview-grid" aria-label="Hardware Status Overview">
+            
+            <!-- Arduino Uno Status -->
+            <div class="conn-status-card" id="connStatusArduino">
+              <div>
+                <div class="conn-status-header">
+                  <span class="conn-device-name">Arduino Uno</span>
+                  <span id="badgeArduino" class="conn-badge badge-disconnected">Disconnected</span>
+                </div>
+                <div id="descArduino" class="conn-device-details">USB Serial Port: None. 9600 baud.</div>
+              </div>
+              <div style="font-size: 0.675rem; color: var(--text-dim); margin-top: 0.5rem;">Core Microcontroller</div>
+            </div>
+
+            <!-- INA219 Sensor Status -->
+            <div class="conn-status-card" id="connStatusIna">
+              <div>
+                <div class="conn-status-header">
+                  <span class="conn-device-name">INA219 Sensor</span>
+                  <span id="badgeIna" class="conn-badge badge-disconnected">Not reported</span>
+                </div>
+                <div id="descIna" class="conn-device-details">I2C Address: 0x40 (A4/A5). High-side DC shunt.</div>
+              </div>
+              <div style="font-size: 0.675rem; color: var(--text-dim); margin-top: 0.5rem;">Voltage &amp; Current Sensor</div>
+            </div>
+
+            <!-- DS18B20 Temp Sensor Status -->
+            <div class="conn-status-card" id="connStatusDs">
+              <div>
+                <div class="conn-status-header">
+                  <span class="conn-device-name">DS18B20 Temp</span>
+                  <span id="badgeDs" class="conn-badge badge-disconnected">Not reported</span>
+                </div>
+                <div id="descDs" class="conn-device-details">1-Wire Bus: Pin D7. 4.7 k&Omega; pull-up to 5V.</div>
+              </div>
+              <div style="font-size: 0.675rem; color: var(--text-dim); margin-top: 0.5rem;">Cell Thermal Sensor</div>
+            </div>
+
+            <!-- OLED SSD1306 Display Status -->
+            <div class="conn-status-card" id="connStatusOled">
+              <div>
+                <div class="conn-status-header">
+                  <span class="conn-device-name">OLED SSD1306</span>
+                  <span id="badgeOled" class="conn-badge badge-untested">Not reported</span>
+                </div>
+                <div id="descOled" class="conn-device-details">I2C Address: 0x3C / 0x3D. Shared I2C bus.</div>
+              </div>
+              <div style="font-size: 0.675rem; color: var(--text-dim); margin-top: 0.5rem;">Display (Optional)</div>
+            </div>
+
+            <!-- MOSFET & Load Circuit Status -->
+            <div class="conn-status-card status-unvalidated" id="connStatusMosfet">
+              <div>
+                <div class="conn-status-header">
+                  <span class="conn-device-name">MOSFET Load</span>
+                  <span id="badgeMosfet" class="conn-badge badge-unvalidated">NOT VALIDATED</span>
+                </div>
+                <div id="descMosfet" class="conn-device-details">Gate: Pin D8. Low-side switch. Requires manual verification.</div>
+              </div>
+              <div style="font-size: 0.675rem; color: var(--text-dim); margin-top: 0.5rem;">Discharge Circuit</div>
+            </div>
+
+            <!-- Battery Sensed Status -->
+            <div class="conn-status-card" id="connStatusBattery">
+              <div>
+                <div class="conn-status-header">
+                  <span class="conn-device-name">Battery Cell</span>
+                  <span id="badgeBattery" class="conn-badge badge-disconnected">Disconnected</span>
+                </div>
+                <div id="descBattery" class="conn-device-details">Measured via INA219 Vin+. &ge; 0.50 V required.</div>
+              </div>
+              <div style="font-size: 0.675rem; color: var(--text-dim); margin-top: 0.5rem;">Cell under test</div>
+            </div>
+
+          </div>
+
+          <!-- 2. Component-by-Component Interactive Wiring Guides -->
+          <div class="overview-card">
+            <div class="card-header-row">
+              <div>
+                <h3 class="card-title">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v6m0 8v6M2 12h6m8 0h6M5 5l4 4m6 6l4 4M19 5l-4 4m-6 6l-4 4"></path></svg>
+                  Component-by-Component Wiring Guides
+                </h3>
+                <p style="font-size: 0.775rem; color: var(--text-muted); margin-top: 0.2rem;">
+                  Step-by-step schematics, pin maps, color-coded wiring tables, and verification checklists.
+                </p>
+              </div>
+            </div>
+
+            <!-- Components Grid -->
+            <div class="component-grid">
+              
+              <!-- Component 1: INA219 -->
+              <div class="component-card">
+                <div>
+                  <div class="comp-header">
+                    <div class="comp-icon">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>
+                    </div>
+                    <div>
+                      <div class="comp-title">INA219 DC Sensor</div>
+                      <div style="font-size: 0.7rem; color: var(--text-muted);">High-side Current &amp; Bus Voltage</div>
+                    </div>
+                  </div>
+                  <p class="comp-desc">
+                    Measures battery voltage and discharge current through an onboard 0.1 &Omega; precision shunt. Connects to the Arduino via standard I2C.
+                  </p>
+                  <div class="comp-pin-list">
+                    <span class="comp-pin-badge">VCC &rarr; 5V</span>
+                    <span class="comp-pin-badge">GND &rarr; GND</span>
+                    <span class="comp-pin-badge">SDA &rarr; A4</span>
+                    <span class="comp-pin-badge">SCL &rarr; A5</span>
+                    <span class="comp-pin-badge" style="background-color: var(--purple-100);">VIN+ / VIN-</span>
+                  </div>
+                </div>
+                <button class="btn btn-secondary btn-view-wiring" data-component="ina219" style="width: 100%;">
+                  View INA219 Wiring &rarr;
+                </button>
+              </div>
+
+              <!-- Component 2: DS18B20 -->
+              <div class="component-card">
+                <div>
+                  <div class="comp-header">
+                    <div class="comp-icon" style="background-color: var(--amber-100); color: var(--amber-700);">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z"></path></svg>
+                    </div>
+                    <div>
+                      <div class="comp-title">DS18B20 Temp Sensor</div>
+                      <div style="font-size: 0.7rem; color: var(--text-muted);">1-Wire Thermal Probe (D7)</div>
+                    </div>
+                  </div>
+                  <p class="comp-desc">
+                    Digital temperature monitoring with 0.0625&deg;C resolution. Requires an external 4.7 k&Omega; pull-up resistor between Data and VDD.
+                  </p>
+                  <div class="comp-pin-list">
+                    <span class="comp-pin-badge">VDD &rarr; 5V</span>
+                    <span class="comp-pin-badge">GND &rarr; GND</span>
+                    <span class="comp-pin-badge">DATA &rarr; D7</span>
+                    <span class="comp-pin-badge" style="background-color: var(--amber-100); color: var(--amber-800);">4.7k&Omega; Pull-up</span>
+                  </div>
+                </div>
+                <button class="btn btn-secondary btn-view-wiring" data-component="ds18b20" style="width: 100%;">
+                  View DS18B20 Wiring &rarr;
+                </button>
+              </div>
+
+              <!-- Component 3: OLED SSD1306 -->
+              <div class="component-card">
+                <div>
+                  <div class="comp-header">
+                    <div class="comp-icon" style="background-color: var(--purple-100); color: var(--purple-700);">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
+                    </div>
+                    <div>
+                      <div class="comp-title">OLED SSD1306 Display</div>
+                      <div style="font-size: 0.7rem; color: var(--text-muted);">0.96&quot; I2C Monochromatic (Optional)</div>
+                    </div>
+                  </div>
+                  <p class="comp-desc">
+                    Displays stand-alone test voltage and current on your hardware bench. Shares the I2C bus (A4/A5) in parallel with the INA219.
+                  </p>
+                  <div class="comp-pin-list">
+                    <span class="comp-pin-badge">VCC &rarr; 5V / 3.3V</span>
+                    <span class="comp-pin-badge">GND &rarr; GND</span>
+                    <span class="comp-pin-badge">SDA &rarr; A4</span>
+                    <span class="comp-pin-badge">SCL &rarr; A5</span>
+                    <span class="comp-pin-badge">Addr: 0x3C</span>
+                  </div>
+                </div>
+                <button class="btn btn-secondary btn-view-wiring" data-component="oled" style="width: 100%;">
+                  View OLED Wiring &rarr;
+                </button>
+              </div>
+
+              <!-- Component 4: IRF540N MOSFET -->
+              <div class="component-card" style="border-left: 3px solid var(--amber-600);">
+                <div>
+                  <div class="comp-header">
+                    <div class="comp-icon" style="background-color: var(--amber-100); color: var(--amber-700);">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+                    </div>
+                    <div>
+                      <div class="comp-title">IRF540N MOSFET Load</div>
+                      <div style="font-size: 0.7rem; color: var(--amber-700); font-weight: 600;">NOT VALIDATED &bull; Gate Pin D8</div>
+                    </div>
+                  </div>
+                  <p class="comp-desc">
+                    Controls test load discharge via low-side N-channel switching. Caution: standard IRF540N requires 10V Vgs to fully saturate.
+                  </p>
+                  <div class="comp-pin-list">
+                    <span class="comp-pin-badge">Pin 1 (Gate) &rarr; D8</span>
+                    <span class="comp-pin-badge">Pin 2 (Drain) &rarr; Load (-)</span>
+                    <span class="comp-pin-badge">Pin 3 (Source) &rarr; GND</span>
+                  </div>
+                </div>
+                <button class="btn btn-secondary btn-view-wiring" data-component="mosfet" style="width: 100%;">
+                  View MOSFET Circuit &rarr;
+                </button>
+              </div>
+
+              <!-- Component 5: Battery -> INA219 -> Load Measurement Loop -->
+              <div class="component-card" style="border-left: 3px solid var(--purple-600); grid-column: 1 / -1;">
+                <div>
+                  <div class="comp-header">
+                    <div class="comp-icon" style="background-color: var(--purple-100); color: var(--purple-700);">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="16" height="10" rx="2" ry="2"></rect><line x1="22" y1="11" x2="22" y2="13"></line><line x1="6" y1="11" x2="6.01" y2="11"></line><line x1="10" y1="11" x2="10.01" y2="11"></line></svg>
+                    </div>
+                    <div>
+                      <div class="comp-title">Battery &rarr; INA219 &rarr; Load Loop (Complete Current Path)</div>
+                      <div style="font-size: 0.7rem; color: var(--text-muted);">High-Current Measurement Loop vs Logic Bus</div>
+                    </div>
+                  </div>
+                  <p class="comp-desc">
+                    The battery measurement path connects through the high-side screw terminals on the INA219 breakout. It is completely isolated from the I2C digital signaling wires.
+                  </p>
+                  <div class="comp-pin-list">
+                    <span class="comp-pin-badge">Battery (+) &rarr; INA219 Vin+</span>
+                    <span class="comp-pin-badge">INA219 Vin- &rarr; Load Resistor (+)</span>
+                    <span class="comp-pin-badge">Load Resistor (-) &rarr; MOSFET Drain</span>
+                    <span class="comp-pin-badge">MOSFET Source &rarr; Battery (-)</span>
+                    <span class="comp-pin-badge">Common GND with Arduino</span>
+                  </div>
+                </div>
+                <button class="btn btn-primary btn-view-wiring" data-component="loop" style="width: auto; align-self: flex-start;">
+                  View Complete Schematic Loop &rarr;
+                </button>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- 3. Connection Troubleshooting Accordion -->
+          <div class="overview-card">
+            <h3 class="card-title" style="margin-bottom: 0.5rem;">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+              Hardware Connection Troubleshooting Guide
+            </h3>
+            <p style="font-size: 0.775rem; color: var(--text-muted); margin-bottom: 1rem;">
+              Select an issue below for step-by-step diagnostic verification in beginner-friendly order.
+            </p>
+
+            <div class="troubleshoot-container" id="troubleshootAccordion">
+              <!-- Item 1: INA219 not detected -->
+              <div class="troubleshoot-item">
+                <div class="troubleshoot-header">
+                  <span>1. INA219 sensor not detected on I2C bus (Address 0x40)</span>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                </div>
+                <div class="troubleshoot-content">
+                  <ol class="troubleshoot-steps">
+                    <li><strong>Check SDA and SCL pin matching:</strong> On standard Arduino Uno Rev3, SDA is Pin <strong>A4</strong> and SCL is Pin <strong>A5</strong>. Reversing these lines is the most common cause of bus initialization failure.</li>
+                    <li><strong>Check Common Ground:</strong> Verify INA219 GND is firmly connected to an Arduino GND pin.</li>
+                    <li><strong>Check VCC Supply:</strong> Ensure VCC is receiving 5V (or 3.3V) from the Arduino power header. Measure with a multimeter if available.</li>
+                    <li><strong>Run I2C Scanner:</strong> Upload the standard Arduino IDE I2C scanner sketch. It should output <code>I2C device found at address 0x40</code>.</li>
+                  </ol>
+                </div>
+              </div>
+
+              <!-- Item 2: OLED blank or not detected -->
+              <div class="troubleshoot-item">
+                <div class="troubleshoot-header">
+                  <span>2. OLED SSD1306 display is blank or not detected</span>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                </div>
+                <div class="troubleshoot-content">
+                  <ol class="troubleshoot-steps">
+                    <li><strong>Verify I2C Address:</strong> Most 0.96" OLED modules use address <code>0x3C</code>, but some clone boards are hardwired to <code>0x3D</code>.</li>
+                    <li><strong>Check Parallel I2C Wiring:</strong> Both the OLED and INA219 share pins A4 (SDA) and A5 (SCL). Ensure breadboard jumper connections are not loose.</li>
+                    <li><strong>Supply Voltage Compatibility:</strong> Most SSD1306 displays include an onboard 3.3V LDO regulator and can accept 5V, but cheap clones may require 3.3V.</li>
+                  </ol>
+                </div>
+              </div>
+
+              <!-- Item 3: DS18B20 not detected (reports -127°C) -->
+              <div class="troubleshoot-item">
+                <div class="troubleshoot-header">
+                  <span>3. DS18B20 temperature sensor not detected or reports -127 &deg;C</span>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                </div>
+                <div class="troubleshoot-content">
+                  <ol class="troubleshoot-steps">
+                    <li><strong>Check Pull-Up Resistor:</strong> The Dallas 1-Wire protocol <strong>requires</strong> a 4.7 k&Omega; resistor between the DATA line (Pin D7) and 5V. Without this resistor, readings float and return <code>-127.0 &deg;C</code>.</li>
+                    <li><strong>Check Pinout Orientation:</strong> Looking at the flat face of the TO-92 package with pins pointing down: Pin 1 (left) = GND, Pin 2 (center) = DATA (D7), Pin 3 (right) = VDD (5V). Reversing pins causes extreme heating!</li>
+                    <li><strong>Check Firmware Pin Assignment:</strong> Verify that <code>PIN_ONEWIRE</code> in <code>smartcell_arduino.ino</code> is set to Digital Pin 7.</li>
+                  </ol>
+                </div>
+              </div>
+
+              <!-- Item 4: Invalid or unstable voltage readings -->
+              <div class="troubleshoot-item">
+                <div class="troubleshoot-header">
+                  <span>4. Invalid, floating, or unstable voltage readings (0.000 V to 0.450 V)</span>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                </div>
+                <div class="troubleshoot-content">
+                  <ol class="troubleshoot-steps">
+                    <li><strong>Tighten Screw Terminals:</strong> High-resistance or loose screw terminals on the INA219 breakout cause voltage drop or floating inputs. Ensure stranded copper wire is securely clamped.</li>
+                    <li><strong>Check Common Battery Ground:</strong> Sensed bus voltage is measured relative to INA219 GND. If the battery negative terminal does not connect to the Arduino GND, the ground reference is floating.</li>
+                    <li><strong>Inspect Battery Holder Contacts:</strong> 18650 spring contacts frequently oxidize or have high contact resistance. Clean with isopropyl alcohol.</li>
+                  </ol>
+                </div>
+              </div>
+
+              <!-- Item 5: Serial COM port unavailable / Access Denied -->
+              <div class="troubleshoot-item">
+                <div class="troubleshoot-header">
+                  <span>5. Serial COM Port unavailable or &quot;Access Denied&quot;</span>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                </div>
+                <div class="troubleshoot-content">
+                  <ol class="troubleshoot-steps">
+                    <li><strong>Close Other Serial Monitors:</strong> On Windows, only one application can hold a COM port at a time. Close the Arduino IDE Serial Monitor, Cura, 3D printer host, or PuTTY.</li>
+                    <li><strong>Disconnect &amp; Re-plug USB:</strong> Unplug the Arduino USB-B cable, wait 3 seconds, and re-insert into a primary motherboard USB port.</li>
+                    <li><strong>Check Device Manager:</strong> Open Windows Device Manager &gt; <em>Ports (COM &amp; LPT)</em> to confirm your Arduino is recognized as <code>COM3</code>, <code>COM4</code>, etc.</li>
+                  </ol>
+                </div>
+              </div>
+
+              <!-- Item 6: Arduino Disconnected / Driver Missing -->
+              <div class="troubleshoot-item">
+                <div class="troubleshoot-header">
+                  <span>6. Arduino Uno disconnected or driver not recognized</span>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                </div>
+                <div class="troubleshoot-content">
+                  <ol class="troubleshoot-steps">
+                    <li><strong>CH340 USB Chip Driver:</strong> If using a budget Arduino clone board, it uses a WCH CH340 USB-to-serial chip instead of an ATmega16U2. Download and install the <strong>CH341SER Windows driver</strong>.</li>
+                    <li><strong>Verify Cable:</strong> Some micro-USB cables are power-only charging cables. Ensure you are using a data-sync USB-B or USB-C cable.</li>
+                  </ol>
+                </div>
+              </div>
+
+              <!-- Item 7: MOSFET / Load Circuit Not Validated -->
+              <div class="troubleshoot-item">
+                <div class="troubleshoot-header">
+                  <span>7. MOSFET load circuit marked NOT VALIDATED (Why?)</span>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                </div>
+                <div class="troubleshoot-content">
+                  <ol class="troubleshoot-steps">
+                    <li><strong>Engineering Rationale:</strong> The website cannot electrically verify that your physical power resistor, heatsink, or fuse is safely sized before applying current. Premature automated activation creates fire hazards.</li>
+                    <li><strong>Gate Threshold Verification:</strong> If using an <strong>IRF540N</strong>, verify gate drive voltage. With 5V logic from the Arduino, it will only conduct partially and run hot. A logic-level <strong>IRLZ44N</strong> is strongly recommended.</li>
+                    <li><strong>Resistor Wattage Sizing:</strong> Verify power rating: $P = I^2 \times R$. For a 3.7V cell across 3.3 &Omega; ($I \approx 1.1\text{ A}$), power dissipation is $\approx 4\text{ W}$. Use at least a 10W power resistor with airflow!</li>
+                  </ol>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 4. Live Diagnostics Console -->
+          <div class="overview-card">
+            <div class="card-header-row">
+              <h3 class="card-title">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 17 10 11 4 5"></polyline><line x1="12" y1="19" x2="20" y2="19"></line></svg>
+                Live Hardware Diagnostics Console
+              </h3>
+              <button id="btnRequestStatus" class="btn btn-secondary" style="padding: 0.25rem 0.65rem; font-size: 0.75rem;">
+                Request Hardware Status
+              </button>
+            </div>
+
+            <div class="diag-grid">
+              <div class="diag-stat-card">
+                <div class="diag-stat-label">Serial Port State</div>
+                <div id="diagPortState" class="diag-stat-val">Disconnected</div>
+              </div>
+              <div class="diag-stat-card">
+                <div class="diag-stat-label">Last Successful Telemetry</div>
+                <div id="diagLastReadingTime" class="diag-stat-val">None</div>
+              </div>
+              <div class="diag-stat-card">
+                <div class="diag-stat-label">Active Sensor Faults</div>
+                <div id="diagActiveFaults" class="diag-stat-val" style="color: var(--mint-600);">None reported</div>
+              </div>
+              <div class="diag-stat-card">
+                <div class="diag-stat-label">MOSFET Gate Safety State</div>
+                <div id="diagGateSafetyState" class="diag-stat-val" style="color: var(--amber-600);">OFF (Disarmed)</div>
+              </div>
+            </div>
+
+            <div class="diag-console" id="diagConsoleBox">
+              Awaiting serial stream connection...<br />
+              [DIAGNOSTICS] Open COM port or start Python Serial Bridge to stream live telemetry.
+            </div>
+          </div>
+
+        </section>
+
+
+        <!-- =================================================================
+             VIEW 3: TEST HISTORY
+             ================================================================= -->
+        <section id="view-history" class="view-section">
+          <div class="table-card">
+            <div class="table-controls">
+              <div class="search-box">
+                <input id="historySearchInput" type="text" placeholder="Search tests (chemistry, assessment, date)..." class="custom-input" />
+              </div>
+
+              <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+                <select id="filterChemistry" class="custom-select" style="width: auto;">
+                  <option value="all">All Chemistries</option>
+                  <option value="liion">18650 Li-ion</option>
+                  <option value="lipo">Li-Po</option>
+                  <option value="nimh">Ni-MH</option>
+                  <option value="nicd">Ni-Cd</option>
+                  <option value="alkaline">Alkaline</option>
+                  <option value="leadacid">Lead-Acid</option>
+                </select>
+
+                <select id="filterAssessment" class="custom-select" style="width: auto;">
+                  <option value="all">All Health Results</option>
+                  <option value="GOOD">GOOD</option>
+                  <option value="WARNING">WARNING</option>
+                  <option value="CRITICAL">CRITICAL</option>
+                </select>
+
+                <button id="btnExportCsv" class="btn btn-primary" title="Export verified history to RFC 4180 CSV">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                  Export CSV
+                </button>
+                <button id="btnExportJson" class="btn btn-secondary" title="Export verified history to structured JSON">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>
+                  Export JSON
+                </button>
+                <button id="btnPrintReport" class="btn btn-secondary" title="Generate printable laboratory report (PDF ready)">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+                  Print / PDF
+                </button>
+                <button id="btnClearHistory" class="btn btn-secondary" title="Clear saved test history">
+                  Clear
+                </button>
+              </div>
+            </div>
+
+            <!-- Table of Tests -->
+            <div style="overflow-x: auto;">
+              <table class="data-table" id="testHistoryTable">
+                <thead>
+                  <tr>
+                    <th>Date &amp; Time</th>
+                    <th>Chemistry</th>
+                    <th>Voc (V)</th>
+                    <th>Vload (V)</th>
+                    <th>Current (A)</th>
+                    <th>Temp (&deg;C)</th>
+                    <th>Sag (V / %)</th>
+                    <th>Rint (m&Omega;)</th>
+                    <th>Assessment</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="testHistoryTableBody">
+                  <!-- Dynamic rows rendered here -->
+                </tbody>
+              </table>
+
+              <!-- Empty state -->
+              <div id="historyEmptyState" class="empty-state">
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                <h4 style="font-size: 0.95rem; font-weight: 700; color: var(--purple-900); margin-bottom: 0.25rem;">No Test Records Found</h4>
+                <p style="font-size: 0.775rem; color: var(--text-muted);">Completed load tests and discharge evaluations will appear here.</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Data Export & Backup Hub Card -->
+          <div class="overview-card" style="margin-top: 1.5rem;">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem; flex-wrap: wrap; gap: 0.75rem;">
+              <div style="display: flex; align-items: center; gap: 0.75rem;">
+                <div style="width: 38px; height: 38px; border-radius: var(--radius-md); background: linear-gradient(135deg, var(--purple-600) 0%, var(--purple-800) 100%); color: #ffffff; display: flex; align-items: center; justify-content: center; box-shadow: 0 3px 8px rgba(124, 58, 237, 0.25);">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                </div>
+                <div>
+                  <h3 class="card-title" style="margin-bottom: 0.15rem;">Data Export &amp; Backup Hub</h3>
+                  <p style="font-size: 0.775rem; color: var(--text-muted);">Download screening archives, live telemetry streams, or generate printable lab reports</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="about-grid-3">
+              <!-- Option 1: CSV Archive -->
+              <div class="about-mini-card">
+                <div class="mini-card-head">
+                  <div class="mini-card-title-group">
+                    <div class="mini-card-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg></div>
+                    <h4>CSV Spreadsheet</h4>
+                  </div>
+                  <span class="mini-badge installed">RFC 4180</span>
+                </div>
+                <p class="mini-card-body">Export all verified battery screening records with Voc, Vload, current, temperature, sag %, and internal resistance for Excel / Google Sheets.</p>
+                <button id="btnExportHubCsv" class="btn btn-primary" style="margin-top: 0.5rem; justify-content: center;">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                  Export All Tests (CSV)
+                </button>
+              </div>
+
+              <!-- Option 2: JSON Archive -->
+              <div class="about-mini-card">
+                <div class="mini-card-head">
+                  <div class="mini-card-title-group">
+                    <div class="mini-card-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg></div>
+                    <h4>Structured JSON</h4>
+                  </div>
+                  <span class="mini-badge active-status">Raw Data</span>
+                </div>
+                <p class="mini-card-body">Export raw test objects with timestamps, error flags, evaluation reasoning, and chemistry metadata for programmatic analysis or backup.</p>
+                <button id="btnExportHubJson" class="btn btn-secondary" style="margin-top: 0.5rem; justify-content: center;">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                  Export All Tests (JSON)
+                </button>
+              </div>
+
+              <!-- Option 3: Printable Lab Report -->
+              <div class="about-mini-card">
+                <div class="mini-card-head">
+                  <div class="mini-card-title-group">
+                    <div class="mini-card-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg></div>
+                    <h4>Print / PDF Report</h4>
+                  </div>
+                  <span class="mini-badge optional">Document</span>
+                </div>
+                <p class="mini-card-body">Generate an executive laboratory battery evaluation report with health summary statistics, chemistry benchmarks, and printable tables.</p>
+                <button id="btnPrintHubReport" class="btn btn-secondary" style="margin-top: 0.5rem; justify-content: center;">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+                  Generate PDF / Print
+                </button>
+              </div>
+            </div>
+
+            <!-- Live Session Telemetry Export -->
+            <div style="background-color: var(--bg-subtle); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1.15rem 1.25rem; margin-top: 1.25rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;">
+              <div>
+                <h4 style="font-size: 0.875rem; font-weight: 700; color: var(--purple-900);">Active Session Telemetry Stream</h4>
+                <p style="font-size: 0.775rem; color: var(--text-muted);">
+                  Currently logged: <strong id="telemetryLoggedCount" style="color: var(--purple-700);">0</strong> live sensor readings (voltage, current, power, temperature).
+                </p>
+              </div>
+              <div style="display: flex; gap: 0.65rem; flex-wrap: wrap;">
+                <button id="btnExportTelemetryCsv" class="btn btn-secondary" style="font-size: 0.8rem; padding: 0.5rem 0.85rem;">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                  Export Telemetry (CSV)
+                </button>
+                <button id="btnExportTelemetryJson" class="btn btn-secondary" style="font-size: 0.8rem; padding: 0.5rem 0.85rem;">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                  Export Telemetry (JSON)
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+
+        <!-- =================================================================
+             VIEW 4: BATTERY TYPES
+             ================================================================= -->
+        <section id="view-types" class="view-section">
+          <div class="overview-card">
+            <h3 class="card-title" style="margin-bottom: 0.5rem;">
+              Verified Chemistry Characteristics &amp; Thresholds
+            </h3>
+            <p style="font-size: 0.8rem; color: var(--text-muted); line-height: 1.5; margin-bottom: 1.25rem;">
+              Battery chemistry dictates electrochemistry, safe operating voltages, internal resistance baselines, and thermal sensitivity. Never apply lithium thresholds to aqueous alkaline or nickel systems.
+            </p>
+
+            <div style="overflow-x: auto;">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Chemistry Name</th>
+                    <th>Nominal V</th>
+                    <th>Full Charge Max</th>
+                    <th>Discharge Cutoff</th>
+                    <th>Healthy Rint Baseline</th>
+                    <th>Rechargeable?</th>
+                    <th>Application &amp; Characteristics</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><strong>18650 Li-ion</strong></td>
+                    <td>3.70 V</td>
+                    <td>4.20 V</td>
+                    <td>3.00 V</td>
+                    <td>&lt; 90 m&Omega;</td>
+                    <td><span class="m-tag" style="background-color: var(--mint-50); color: var(--mint-700);">Yes</span></td>
+                    <td>High energy density; severe degradation exhibits elevated internal resistance &gt; 220 m&Omega;.</td>
+                  </tr>
+                  <tr>
+                    <td><strong>Lithium Polymer (Li-Po)</strong></td>
+                    <td>3.70 V</td>
+                    <td>4.20 V</td>
+                    <td>3.00 V</td>
+                    <td>&lt; 75 m&Omega;</td>
+                    <td><span class="m-tag" style="background-color: var(--mint-50); color: var(--mint-700);">Yes</span></td>
+                    <td>Pouch cell with high burst C-rates; susceptible to physical swelling if over-discharged.</td>
+                  </tr>
+                  <tr>
+                    <td><strong>LiFePO4</strong></td>
+                    <td>3.20 V</td>
+                    <td>3.65 V</td>
+                    <td>2.50 V</td>
+                    <td>&lt; 60 m&Omega;</td>
+                    <td><span class="m-tag" style="background-color: var(--mint-50); color: var(--mint-700);">Yes</span></td>
+                    <td>Remarkable thermal stability and flat discharge plateau. High cycle longevity.</td>
+                  </tr>
+                  <tr>
+                    <td><strong>Ni-MH (Rechargeable AA/AAA)</strong></td>
+                    <td>1.20 V</td>
+                    <td>1.45 V</td>
+                    <td>1.00 V</td>
+                    <td>&lt; 150 m&Omega;</td>
+                    <td><span class="m-tag" style="background-color: var(--mint-50); color: var(--mint-700);">Yes</span></td>
+                    <td>Higher internal resistance than lithium; linear voltage dip under moderate load.</td>
+                  </tr>
+                  <tr>
+                    <td><strong>Ni-Cd</strong></td>
+                    <td>1.20 V</td>
+                    <td>1.45 V</td>
+                    <td>0.90 V</td>
+                    <td>&lt; 120 m&Omega;</td>
+                    <td><span class="m-tag" style="background-color: var(--mint-50); color: var(--mint-700);">Yes</span></td>
+                    <td>Robust against high discharge peaks; prone to memory effect.</td>
+                  </tr>
+                  <tr>
+                    <td><strong>Alkaline (Zn-MnO2)</strong></td>
+                    <td>1.50 V</td>
+                    <td>1.60 V</td>
+                    <td>0.90 V</td>
+                    <td>&lt; 250 m&Omega;</td>
+                    <td><span class="m-tag" style="background-color: var(--rose-50); color: var(--rose-600);">No (Primary)</span></td>
+                    <td>Non-rechargeable. Do not connect to any charging source under any circumstances.</td>
+                  </tr>
+                  <tr>
+                    <td><strong>Lead-Acid (12V SLA / AGM)</strong></td>
+                    <td>12.00 V</td>
+                    <td>14.40 V</td>
+                    <td>10.50 V</td>
+                    <td>&lt; 35 m&Omega;</td>
+                    <td><span class="m-tag" style="background-color: var(--mint-50); color: var(--mint-700);">Yes</span></td>
+                    <td>Starter/deep cycle. High risk of permanent sulfation when left below 11.8 V.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+
+        <!-- =================================================================
+             VIEW 5: ANALYTICS
+             ================================================================= -->
+        <section id="view-analytics" class="view-section">
+          <div class="overview-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
+            <div class="overview-card">
+              <div class="card-title">Total Tests Logged</div>
+              <div id="statTotalTests" class="health-main-val" style="margin: 0.5rem 0;">0</div>
+              <p style="font-size: 0.75rem; color: var(--text-muted);">Completed verified screening runs</p>
+            </div>
+            <div class="overview-card">
+              <div class="card-title">Good Cell Ratio</div>
+              <div id="statGoodRatio" class="health-main-val" style="margin: 0.5rem 0; color: var(--mint-700);">-- %</div>
+              <p style="font-size: 0.75rem; color: var(--text-muted);">Passed health benchmark</p>
+            </div>
+            <div class="overview-card">
+              <div class="card-title">Average Rint</div>
+              <div id="statAvgRint" class="health-main-val" style="margin: 0.5rem 0; color: var(--purple-700);">-- m&Omega;</div>
+              <p style="font-size: 0.75rem; color: var(--text-muted);">Across tested cells</p>
+            </div>
+          </div>
+        </section>
+
+
+        <!-- =================================================================
+             VIEW 6: SETTINGS
+             ================================================================= -->
+        <section id="view-settings" class="view-section">
+          <div class="overview-card" style="max-width: 720px;">
+            <h3 class="card-title" style="margin-bottom: 1rem;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+              Hardware &amp; Serial Communication Settings
+            </h3>
+
+            <div style="display: flex; flex-direction: column; gap: 1rem;">
+              <div>
+                <label for="settingConnectionMode" class="form-label">Connection Mode</label>
+                <select id="settingConnectionMode" class="custom-select">
+                  <option value="bridge" selected>Python Serial Bridge (WebSocket: ws://localhost:8765)</option>
+                  <option value="webserial">Direct Browser Web Serial (USB Serial Port in Chrome/Edge)</option>
+                </select>
+                <p style="font-size: 0.725rem; color: var(--text-muted); margin-top: 0.25rem;">
+                  The Python bridge supports all browsers and background port reading. Web Serial connects directly without running Python.
+                </p>
+              </div>
+
+              <div>
+                <label for="settingWsUrl" class="form-label">Bridge WebSocket URL</label>
+                <input id="settingWsUrl" type="text" value="ws://localhost:8765" class="custom-input" />
+              </div>
+
+              <div>
+                <label for="settingBaudRate" class="form-label">Baud Rate</label>
+                <select id="settingBaudRate" class="custom-select">
+                  <option value="9600" selected>9600 baud (Default)</option>
+                  <option value="19200">19200 baud</option>
+                  <option value="57600">57600 baud</option>
+                  <option value="115200">115200 baud</option>
+                </select>
+              </div>
+
+              <div style="margin-top: 0.5rem;">
+                <button id="btnSaveSettings" class="btn btn-primary">
+                  Save Settings
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+
+        <!-- =================================================================
+             VIEW 7: ABOUT PROJECT (9 Vertically Stacked Cards)
+             ================================================================= -->
+        <section id="view-about" class="view-section">
+          <div class="about-stack">
+
+            <!-- 1. PROJECT OVERVIEW CARD -->
+            <div id="about-card-overview" class="about-card">
+              <div class="about-card-header">
+                <div class="about-badge-icon">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+                </div>
+                <div>
+                  <h3>Project Overview</h3>
+                  <p>Smart Battery Screening and Monitoring System</p>
+                </div>
+              </div>
+
+              <div class="about-hero-grid">
+                <div>
+                  <div class="about-tagline-box">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+                    <span>“Measure Smarter. Monitor Better. Understand Battery Health.”</span>
+                  </div>
+                  <h4 style="font-size: 1.15rem; font-weight: 700; color: var(--purple-900); margin-bottom: 0.65rem;">
+                    SmartCell — Smart Battery Screening and Monitoring System
+                  </h4>
+                  <p class="about-hero-desc">
+                    SmartCell is an Arduino-based battery screening prototype designed to measure and monitor important battery parameters, including voltage, current, power, and temperature. The system aims to help users understand battery behavior and explore potential warning signs through measurements and controlled-load testing once the hardware has been safely validated.
+                  </p>
+                  <div class="about-hero-actions">
+                    <button id="btnAboutExploreDashboard" class="btn-hero-primary" data-tab="dashboard">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+                      <span>Explore Dashboard</span>
+                    </button>
+                    <button id="btnAboutViewConnections" class="btn-hero-secondary" data-tab="connections">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v6m0 8v6M2 12h6m8 0h6M5 5l4 4m6 6l4 4M19 5l-4 4m-6 6l-4 4"></path></svg>
+                      <span>View Connections</span>
+                    </button>
+                  </div>
+                </div>
+
+                <div class="about-hero-graphic">
+                  <svg viewBox="0 0 320 200" width="100%" height="180" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Background Soft Gradients -->
+                    <defs>
+                      <linearGradient id="cellGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stop-color="#7c3aed"/>
+                        <stop offset="100%" stop-color="#4c1d95"/>
+                      </linearGradient>
+                      <linearGradient id="glowGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" stop-color="#059669"/>
+                        <stop offset="100%" stop-color="#10b981"/>
+                      </linearGradient>
+                    </defs>
+                    <!-- Battery Silhouette -->
+                    <rect x="30" y="45" width="110" height="120" rx="10" fill="url(#cellGrad)" filter="drop-shadow(0 4px 10px rgba(124,58,237,0.3))"/>
+                    <!-- Terminal Top -->
+                    <rect x="68" y="33" width="34" height="12" rx="3" fill="#c4b5fd"/>
+                    <!-- Charge Level Bar Inside Battery -->
+                    <rect x="42" y="65" width="86" height="85" rx="6" fill="#ffffff" fill-opacity="0.15"/>
+                    <rect x="48" y="90" width="74" height="52" rx="4" fill="url(#glowGrad)"/>
+                    <text x="85" y="122" font-size="12" font-weight="bold" fill="#ffffff" text-anchor="middle">3.72 V</text>
+                    <text x="85" y="137" font-size="9" fill="#d1fae5" text-anchor="middle">Li-ion 18650</text>
+                    <text x="85" y="80" font-size="10" font-weight="bold" fill="#ede9fe" text-anchor="middle">SmartCell</text>
+
+                    <!-- Telemetry Data Waves & Sensors -->
+                    <!-- Connection Wire Pos -->
+                    <path d="M 85 33 L 85 20 L 190 20 L 190 60" stroke="#7c3aed" stroke-width="2.5" fill="none" stroke-dasharray="4 2"/>
+                    <!-- Sensor Chip INA219 -->
+                    <rect x="160" y="60" width="130" height="42" rx="6" fill="#ffffff" stroke="#7c3aed" stroke-width="1.5" filter="drop-shadow(0 2px 6px rgba(0,0,0,0.06))"/>
+                    <circle cx="178" cy="81" r="7" fill="#ede9fe"/>
+                    <path d="M 175 81 L 181 81" stroke="#7c3aed" stroke-width="2"/>
+                    <text x="194" y="77" font-size="10" font-weight="bold" fill="#1e1b4b">INA219 I²C</text>
+                    <text x="194" y="91" font-size="8.5" fill="#64748b">12-Bit ADC • 0.1Ω</text>
+
+                    <!-- Sensor Chip DS18B20 -->
+                    <rect x="160" y="115" width="130" height="42" rx="6" fill="#ffffff" stroke="#059669" stroke-width="1.5" filter="drop-shadow(0 2px 6px rgba(0,0,0,0.06))"/>
+                    <circle cx="178" cy="136" r="7" fill="#d1fae5"/>
+                    <circle cx="178" cy="136" r="3" fill="#059669"/>
+                    <text x="194" y="132" font-size="10" font-weight="bold" fill="#1e1b4b">DS18B20 1-Wire</text>
+                    <text x="194" y="146" font-size="8.5" fill="#64748b">Thermal Probe • D7</text>
+                  </svg>
+                </div>
+              </div>
+            </div>
+
+            <!-- 2. PROJECT OBJECTIVES CARD -->
+            <div id="about-card-objectives" class="about-card">
+              <div class="about-card-header">
+                <div class="about-badge-icon">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 14 14"></polyline></svg>
+                </div>
+                <div>
+                  <h3>Project Objectives</h3>
+                  <p>Core engineering goals and design targets for the battery screening prototype</p>
+                </div>
+              </div>
+
+              <div class="about-grid-3">
+                <!-- Obj 1 -->
+                <div class="about-mini-card">
+                  <div class="mini-card-head">
+                    <div class="mini-card-title-group">
+                      <div class="mini-card-icon">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path></svg>
+                      </div>
+                      <h4>1. Voltage Measurement</h4>
+                    </div>
+                  </div>
+                  <p class="mini-card-body">
+                    Measure open-circuit and loaded terminal bus voltage with millivolt resolution using the INA219 12-bit precision analog-to-digital converter.
+                  </p>
+                </div>
+
+                <!-- Obj 2 -->
+                <div class="about-mini-card">
+                  <div class="mini-card-head">
+                    <div class="mini-card-title-group">
+                      <div class="mini-card-icon">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+                      </div>
+                      <h4>2. Current &amp; Power Monitoring</h4>
+                    </div>
+                  </div>
+                  <p class="mini-card-body">
+                    Monitor charge and discharge current across an onboard 0.1 &Omega; shunt resistor and compute instantaneous active power dissipation in milliwatts.
+                  </p>
+                </div>
+
+                <!-- Obj 3 -->
+                <div class="about-mini-card">
+                  <div class="mini-card-head">
+                    <div class="mini-card-title-group">
+                      <div class="mini-card-icon">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z"></path></svg>
+                      </div>
+                      <h4>3. Battery Temperature</h4>
+                    </div>
+                  </div>
+                  <p class="mini-card-body">
+                    Measure cell surface temperature via a Dallas DS18B20 digital 1-Wire sensor to detect thermal stress, heating anomalies, and runaway risks.
+                  </p>
+                </div>
+
+                <!-- Obj 4 -->
+                <div class="about-mini-card">
+                  <div class="mini-card-head">
+                    <div class="mini-card-title-group">
+                      <div class="mini-card-icon">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
+                      </div>
+                      <h4>4. Live Telemetry Visualization</h4>
+                    </div>
+                  </div>
+                  <p class="mini-card-body">
+                    Display valid live readings, connection indicators, and rolling waveform charts on the website when the device is actively communicating.
+                  </p>
+                </div>
+
+                <!-- Obj 5 -->
+                <div class="about-mini-card">
+                  <div class="mini-card-head">
+                    <div class="mini-card-title-group">
+                      <div class="mini-card-icon">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+                      </div>
+                      <h4>5. Voltage Sag &amp; Recovery</h4>
+                    </div>
+                  </div>
+                  <p class="mini-card-body">
+                    Observe voltage sag during controlled 3-second load testing (V<sub>sag</sub> = V<sub>oc</sub> &minus; V<sub>load</sub>) and post-test bounce-back once validated.
+                  </p>
+                </div>
+
+                <!-- Obj 6 -->
+                <div class="about-mini-card">
+                  <div class="mini-card-head">
+                    <div class="mini-card-title-group">
+                      <div class="mini-card-icon">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                      </div>
+                      <h4>6. Warning Condition Detection</h4>
+                    </div>
+                  </div>
+                  <p class="mini-card-body">
+                    Identify potential warning signs, degraded health, and critical cutoff breaches using transparent, documented electrochemistry rules.
+                  </p>
+                </div>
+
+                <!-- Obj 7 -->
+                <div class="about-mini-card">
+                  <div class="mini-card-head">
+                    <div class="mini-card-title-group">
+                      <div class="mini-card-icon">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+                      </div>
+                      <h4>7. Historical Comparison</h4>
+                    </div>
+                  </div>
+                  <p class="mini-card-body">
+                    Record screening results locally with timestamps, battery chemistry presets, and RFC 4180 CSV export for lab reports and long-term comparisons.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <!-- 3. HARDWARE COMPONENTS CARD -->
+            <div id="about-card-hardware" class="about-card">
+              <div class="about-card-header">
+                <div class="about-badge-icon">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="2" ry="2"></rect><rect x="9" y="9" width="6" height="6"></rect><line x1="9" y1="1" x2="9" y2="4"></line><line x1="15" y1="1" x2="15" y2="4"></line><line x1="9" y1="20" x2="9" y2="23"></line><line x1="15" y1="20" x2="15" y2="23"></line><line x1="20" y1="9" x2="23" y2="9"></line><line x1="20" y1="14" x2="23" y2="14"></line><line x1="1" y1="9" x2="4" y2="9"></line><line x1="1" y1="14" x2="4" y2="14"></line></svg>
+                </div>
+                <div>
+                  <h3>Hardware Components</h3>
+                  <p>Microcontroller, sensors, switching devices, and bench instrumentation</p>
+                </div>
+              </div>
+
+              <div class="about-grid-3">
+                <!-- Arduino Uno -->
+                <div class="about-mini-card">
+                  <div class="mini-card-head">
+                    <div class="mini-card-title-group">
+                      <div class="mini-card-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="2"></rect><circle cx="9" cy="9" r="2"></circle><circle cx="15" cy="15" r="2"></circle></svg></div>
+                      <h4>Arduino Uno</h4>
+                    </div>
+                    <span class="mini-badge installed">Installed</span>
+                  </div>
+                  <p class="mini-card-body">
+                    Main microcontroller (ATmega328P @ 16 MHz). Coordinates sensor telemetry, USB serial communication at 9600 baud, and controlled pulse timing.
+                  </p>
+                </div>
+
+                <!-- INA219 -->
+                <div class="about-mini-card">
+                  <div class="mini-card-head">
+                    <div class="mini-card-title-group">
+                      <div class="mini-card-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path></svg></div>
+                      <h4>INA219 Sensor</h4>
+                    </div>
+                    <span class="mini-badge installed">Installed</span>
+                  </div>
+                  <p class="mini-card-body">
+                    High-side I²C bidirectional current and voltage monitoring module. Samples bus voltage up to 26V and current via an internal 0.1 &Omega; shunt resistor.
+                  </p>
+                </div>
+
+                <!-- DS18B20 -->
+                <div class="about-mini-card">
+                  <div class="mini-card-head">
+                    <div class="mini-card-title-group">
+                      <div class="mini-card-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z"></path></svg></div>
+                      <h4>DS18B20 Sensor</h4>
+                    </div>
+                    <span class="mini-badge installed">Installed</span>
+                  </div>
+                  <p class="mini-card-body">
+                    Digital 1-Wire temperature sensor placed against the battery casing. Driven via Digital Pin 7 with a 4.7 k&Omega; pull-up resistor to 5V.
+                  </p>
+                </div>
+
+                <!-- 18650 Battery -->
+                <div class="about-mini-card">
+                  <div class="mini-card-head">
+                    <div class="mini-card-title-group">
+                      <div class="mini-card-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="16" height="10" rx="2"></rect><line x1="22" y1="11" x2="22" y2="13"></line></svg></div>
+                      <h4>18650 Li-ion Cell</h4>
+                    </div>
+                    <span class="mini-badge installed">Under Test</span>
+                  </div>
+                  <p class="mini-card-body">
+                    Standard 3.7V nominal cylindrical secondary lithium-ion cell under screening. Evaluated for open-circuit voltage, sag under load, and thermal stability.
+                  </p>
+                </div>
+
+                <!-- Battery Holder -->
+                <div class="about-mini-card">
+                  <div class="mini-card-head">
+                    <div class="mini-card-title-group">
+                      <div class="mini-card-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="2"></rect><path d="M7 15V9m10 6V9"></path></svg></div>
+                      <h4>Battery Holder</h4>
+                    </div>
+                    <span class="mini-badge installed">Installed</span>
+                  </div>
+                  <p class="mini-card-body">
+                    Keystone-style single 18650 mechanical fixture with low-resistance gold/nickel-plated leaf springs ensuring reliable contact during testing.
+                  </p>
+                </div>
+
+                <!-- Power Resistor -->
+                <div class="about-mini-card">
+                  <div class="mini-card-head">
+                    <div class="mini-card-title-group">
+                      <div class="mini-card-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12h4l3-6 6 12 3-6h4"></path></svg></div>
+                      <h4>Power Resistor</h4>
+                    </div>
+                    <span class="mini-badge unverified">Unverified</span>
+                  </div>
+                  <p class="mini-card-body">
+                    Heavy-duty 3.3 &Omega; to 10 &Omega; ceramic power resistor (10W to 25W rated) providing a controlled load current during voltage sag evaluations.
+                  </p>
+                </div>
+
+                <!-- MOSFET -->
+                <div class="about-mini-card">
+                  <div class="mini-card-head">
+                    <div class="mini-card-title-group">
+                      <div class="mini-card-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 3v18M18 6l-6 6 6 6M12 12H6"></path></svg></div>
+                      <h4>IRF540N MOSFET</h4>
+                    </div>
+                    <span class="mini-badge disabled">Not Validated</span>
+                  </div>
+                  <p class="mini-card-body">
+                    Low-side N-channel electronic switch on Pin 8. <em>Warning:</em> IRF540N requires V<sub>gs</sub>=10V to fully saturate; direct 5V drive operates in linear mode with high heat. Logic-level IRLZ44N is recommended.
+                  </p>
+                </div>
+
+                <!-- OLED Display -->
+                <div class="about-mini-card">
+                  <div class="mini-card-head">
+                    <div class="mini-card-title-group">
+                      <div class="mini-card-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="14" rx="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line></svg></div>
+                      <h4>OLED SSD1306</h4>
+                    </div>
+                    <span class="mini-badge optional">Optional / Planned</span>
+                  </div>
+                  <p class="mini-card-body">
+                    0.96-inch monochrome 128&times;64 I²C display (address 0x3C/0x3D) for standalone bench readout without a connected computer. Supported by firmware probe.
+                  </p>
+                </div>
+
+                <!-- Rotary Encoder -->
+                <div class="about-mini-card">
+                  <div class="mini-card-head">
+                    <div class="mini-card-title-group">
+                      <div class="mini-card-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 3"></path></svg></div>
+                      <h4>Rotary Encoder</h4>
+                    </div>
+                    <span class="mini-badge planned">Planned</span>
+                  </div>
+                  <p class="mini-card-body">
+                    Digital quadrature encoder with center push button for standalone menu navigation, cutoff voltage selection, and test initiation.
+                  </p>
+                </div>
+
+                <!-- LEDs & Buzzer -->
+                <div class="about-mini-card">
+                  <div class="mini-card-head">
+                    <div class="mini-card-title-group">
+                      <div class="mini-card-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg></div>
+                      <h4>LEDs &amp; Buzzer</h4>
+                    </div>
+                    <span class="mini-badge planned">Planned</span>
+                  </div>
+                  <p class="mini-card-body">
+                    Tricolor status LEDs (Green/Amber/Red) and active piezo buzzer providing instant physical feedback when tests conclude or thermal limits are exceeded.
+                  </p>
+                </div>
+
+                <!-- Supporting Components -->
+                <div class="about-mini-card">
+                  <div class="mini-card-head">
+                    <div class="mini-card-title-group">
+                      <div class="mini-card-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg></div>
+                      <h4>Supporting Hardware</h4>
+                    </div>
+                    <span class="mini-badge installed">Installed</span>
+                  </div>
+                  <p class="mini-card-body">
+                    20 AWG high-current wiring, 100 &Omega; gate resistor, 10 k&Omega; pulldown, 4.7 k&Omega; OneWire pullup, breadboard bus, and inline DC safety fuse holder.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <!-- 4. HOW SMARTCELL WORKS CARD -->
+            <div id="about-card-how-it-works" class="about-card">
+              <div class="about-card-header">
+                <div class="about-badge-icon">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="6" cy="6" r="3"></circle><circle cx="6" cy="18" r="3"></circle><line x1="20" y1="4" x2="20" y2="20"></line><line x1="6" y1="9" x2="6" y2="15"></line><path d="M20 12h-8"></path></svg>
+                </div>
+                <div>
+                  <h3>How SmartCell Works</h3>
+                  <p>5-step end-to-end data acquisition and telemetry pipeline</p>
+                </div>
+              </div>
+
+              <div class="how-it-works-flow">
+                <!-- Step 1 -->
+                <div class="step-card">
+                  <div class="step-number-bubble">1</div>
+                  <h4>Battery Input</h4>
+                  <p>The user inspects the cell and inserts a supported battery (e.g., 18650 Li-ion) into the holder, ensuring correct terminal polarity.</p>
+                  <div class="step-connector-arrow">&rarr;</div>
+                </div>
+
+                <!-- Step 2 -->
+                <div class="step-card">
+                  <div class="step-number-bubble">2</div>
+                  <h4>Sensor Measurement</h4>
+                  <p>The INA219 samples terminal voltage and current across the 0.1 &Omega; shunt, while the DS18B20 monitors surface temperature.</p>
+                  <div class="step-connector-arrow">&rarr;</div>
+                </div>
+
+                <!-- Step 3 -->
+                <div class="step-card">
+                  <div class="step-number-bubble">3</div>
+                  <h4>Arduino Processing</h4>
+                  <p>The ATmega328P reads raw ADC counts, validates range plausibility, checks safety cutoffs, and formats a newline-delimited JSON packet.</p>
+                  <div class="step-connector-arrow">&rarr;</div>
+                </div>
+
+                <!-- Step 4 -->
+                <div class="step-card">
+                  <div class="step-number-bubble">4</div>
+                  <h4>Website Communication</h4>
+                  <p>Readings stream over USB serial at 9600 baud via either the local Python WebSocket bridge or direct browser Web Serial API.</p>
+                  <div class="step-connector-arrow">&rarr;</div>
+                </div>
+
+                <!-- Step 5 -->
+                <div class="step-card">
+                  <div class="step-number-bubble">5</div>
+                  <h4>Dashboard Visualization</h4>
+                  <p>The website renders live telemetry cards, plots rolling waveforms, checks health criteria, and saves records to history.</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- 5. SOFTWARE & TECHNOLOGIES CARD -->
+            <div id="about-card-software" class="about-card">
+              <div class="about-card-header">
+                <div class="about-badge-icon">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 17 10 11 4 5"></polyline><line x1="12" y1="19" x2="20" y2="19"></line></svg>
+                </div>
+                <div>
+                  <h3>Software &amp; Technologies</h3>
+                  <p>Firmware libraries, communication protocols, and web technologies</p>
+                </div>
+              </div>
+
+              <div class="about-grid-3">
+                <!-- Tech 1 -->
+                <div class="about-mini-card">
+                  <div class="mini-card-head">
+                    <div class="mini-card-title-group">
+                      <div class="mini-card-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg></div>
+                      <h4>Arduino IDE</h4>
+                    </div>
+                    <span class="mini-badge active-status">Toolchain</span>
+                  </div>
+                  <p class="mini-card-body">
+                    Official integrated development environment and AVR-GCC compilation toolchain used for flashing C/C++ firmware to the ATmega328P.
+                  </p>
+                </div>
+
+                <!-- Tech 2 -->
+                <div class="about-mini-card">
+                  <div class="mini-card-head">
+                    <div class="mini-card-title-group">
+                      <div class="mini-card-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg></div>
+                      <h4>C/C++ Firmware</h4>
+                    </div>
+                    <span class="mini-badge active-status">Firmware</span>
+                  </div>
+                  <p class="mini-card-body">
+                    Embedded firmware built with <code>Adafruit_INA219</code>, <code>OneWire</code>, and <code>DallasTemperature</code> with non-blocking 1 Hz timer dispatch.
+                  </p>
+                </div>
+
+                <!-- Tech 3 -->
+                <div class="about-mini-card">
+                  <div class="mini-card-head">
+                    <div class="mini-card-title-group">
+                      <div class="mini-card-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg></div>
+                      <h4>HTML5, CSS3 &amp; ES6+</h4>
+                    </div>
+                    <span class="mini-badge active-status">Frontend</span>
+                  </div>
+                  <p class="mini-card-body">
+                    Zero-dependency vanilla JavaScript ES Modules with semantic HTML5, light lavender design system, and custom responsive CSS Grid layouts.
+                  </p>
+                </div>
+
+                <!-- Tech 4 -->
+                <div class="about-mini-card">
+                  <div class="mini-card-head">
+                    <div class="mini-card-title-group">
+                      <div class="mini-card-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg></div>
+                      <h4>USB Serial JSON Protocol</h4>
+                    </div>
+                    <span class="mini-badge active-status">Protocol</span>
+                  </div>
+                  <p class="mini-card-body">
+                    Newline-delimited JSON stream at 9600 baud, 8N1. Transmits validated measurement records, status handshakes, and diagnostic error frames.
+                  </p>
+                </div>
+
+                <!-- Tech 5 -->
+                <div class="about-mini-card">
+                  <div class="mini-card-head">
+                    <div class="mini-card-title-group">
+                      <div class="mini-card-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg></div>
+                      <h4>Python Bridge &amp; Web Serial</h4>
+                    </div>
+                    <span class="mini-badge active-status">Dual Transport</span>
+                  </div>
+                  <p class="mini-card-body">
+                    Dual connectivity: a Python serial-to-WebSocket bridge (<code>pyserial</code> + <code>websockets</code>) and direct browser Web Serial API for Chrome/Edge.
+                  </p>
+                </div>
+
+                <!-- Tech 6 -->
+                <div class="about-mini-card">
+                  <div class="mini-card-head">
+                    <div class="mini-card-title-group">
+                      <div class="mini-card-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg></div>
+                      <h4>Chart.js (v4.4.1)</h4>
+                    </div>
+                    <span class="mini-badge active-status">Visualization</span>
+                  </div>
+                  <p class="mini-card-body">
+                    High-performance hardware-accelerated HTML5 canvas telemetry charts streaming dynamic voltage and current time-series data with fallback support.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <!-- 6. BATTERY SCREENING FEATURES CARD -->
+            <div id="about-card-features" class="about-card">
+              <div class="about-card-header">
+                <div class="about-badge-icon">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"></path></svg>
+                </div>
+                <div>
+                  <h3>Battery Screening Features</h3>
+                  <p>Live monitoring, impedance estimation, and safety heuristics</p>
+                </div>
+              </div>
+
+              <div class="about-grid-3">
+                <div class="about-mini-card">
+                  <div class="mini-card-head">
+                    <div class="mini-card-title-group">
+                      <div class="mini-card-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path></svg></div>
+                      <h4>Live Voltage Monitoring</h4>
+                    </div>
+                  </div>
+                  <p class="mini-card-body">
+                    Tracks open-circuit voltage (V<sub>oc</sub>) and loaded bus voltage with automatic disconnect detection for values below 0.50 V.
+                  </p>
+                </div>
+
+                <div class="about-mini-card">
+                  <div class="mini-card-head">
+                    <div class="mini-card-title-group">
+                      <div class="mini-card-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg></div>
+                      <h4>Current &amp; Power Tracking</h4>
+                    </div>
+                  </div>
+                  <p class="mini-card-body">
+                    Displays continuous current in amperes (converted accurately from mA) and calculates real-time power dissipation in mW.
+                  </p>
+                </div>
+
+                <div class="about-mini-card">
+                  <div class="mini-card-head">
+                    <div class="mini-card-title-group">
+                      <div class="mini-card-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z"></path></svg></div>
+                      <h4>Temperature Monitoring</h4>
+                    </div>
+                  </div>
+                  <p class="mini-card-body">
+                    Monitors thermal readings with overheat warnings triggered when cell temperature exceeds 45 &deg;C. Shows &ldquo;--&rdquo; when disconnected.
+                  </p>
+                </div>
+
+                <div class="about-mini-card">
+                  <div class="mini-card-head">
+                    <div class="mini-card-title-group">
+                      <div class="mini-card-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg></div>
+                      <h4>Voltage Trend Charts</h4>
+                    </div>
+                  </div>
+                  <p class="mini-card-body">
+                    Renders rolling 30-sample time-series graphs of terminal voltage to visualize stability, noise, and discharge slope in real time.
+                  </p>
+                </div>
+
+                <div class="about-mini-card">
+                  <div class="mini-card-head">
+                    <div class="mini-card-title-group">
+                      <div class="mini-card-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg></div>
+                      <h4>Controlled-Load Sag Analysis</h4>
+                    </div>
+                  </div>
+                  <p class="mini-card-body">
+                    Quantifies instantaneous voltage sag (V<sub>sag</sub> and sag percentage) during controlled 3-second pulse tests once hardware is validated.
+                  </p>
+                </div>
+
+                <div class="about-mini-card">
+                  <div class="mini-card-head">
+                    <div class="mini-card-title-group">
+                      <div class="mini-card-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12h4l3-6 6 12 3-6h4"></path></svg></div>
+                      <h4>Estimated Internal Resistance</h4>
+                    </div>
+                  </div>
+                  <p class="mini-card-body">
+                    Calculates DC internal resistance (R<sub>int</sub> = &Delta;V / I<sub>load</sub> in m&Omega;) only when valid open-circuit and loaded readings exist.
+                  </p>
+                </div>
+
+                <div class="about-mini-card">
+                  <div class="mini-card-head">
+                    <div class="mini-card-title-group">
+                      <div class="mini-card-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg></div>
+                      <h4>Standardized Health Status</h4>
+                    </div>
+                  </div>
+                  <p class="mini-card-body">
+                    Classifies cells into GOOD, WARNING, CRITICAL, or NOT TESTED based on transparent, configurable chemistry benchmark rules.
+                  </p>
+                </div>
+
+                <div class="about-mini-card">
+                  <div class="mini-card-head">
+                    <div class="mini-card-title-group">
+                      <div class="mini-card-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg></div>
+                      <h4>History &amp; CSV Export</h4>
+                    </div>
+                  </div>
+                  <p class="mini-card-body">
+                    Stores completed screening runs in browser local storage with chemistry tags, date/time stamps, and one-click RFC 4180 CSV export.
+                  </p>
+                </div>
+
+                <div class="about-mini-card">
+                  <div class="mini-card-head">
+                    <div class="mini-card-title-group">
+                      <div class="mini-card-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v6m0 8v6M2 12h6m8 0h6M5 5l4 4m6 6l4 4M19 5l-4 4m-6 6l-4 4"></path></svg></div>
+                      <h4>Real-Time Connection Status</h4>
+                    </div>
+                  </div>
+                  <p class="mini-card-body">
+                    Maintains live connection indicators (Connected, Disconnected, Reconnecting) without showing stale measurements or fabricated values.
+                  </p>
+                </div>
+              </div>
+
+              <!-- Disclaimer Banner -->
+              <div class="about-disclaimer-box">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                <div>
+                  <strong style="display: block; margin-bottom: 0.2rem;">Engineering &amp; Safety Disclaimer:</strong>
+                  SmartCell is an educational and laboratory battery screening prototype, not a certified commercial battery analyzer. It does not claim certified accuracy for remaining capacity (mAh), remaining cycle life, or commercial safety certification without dedicated, validated testing fixtures.
+                </div>
+              </div>
+            </div>
+
+            <!-- 7. PROJECT STATUS CARD -->
+            <div id="about-card-status" class="about-card">
+              <div class="about-card-header">
+                <div class="about-badge-icon">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                </div>
+                <div>
+                  <h3>Project Status</h3>
+                  <p>Current operational state across hardware, firmware, and software subsystems</p>
+                </div>
+              </div>
+
+              <div class="about-grid-4">
+                <!-- Status 1 -->
+                <div class="about-mini-card">
+                  <div class="mini-card-head">
+                    <h4 style="font-size: 0.85rem;">Website Implementation</h4>
+                    <span class="mini-badge installed">Operational</span>
+                  </div>
+                  <p class="mini-card-body">Responsive single-page dashboard with full navigation, Chart.js, and modal guides.</p>
+                </div>
+
+                <!-- Status 2 -->
+                <div class="about-mini-card">
+                  <div class="mini-card-head">
+                    <h4 style="font-size: 0.85rem;">Arduino USB Connection</h4>
+                    <span id="aboutStatusArduino" class="mini-badge unverified">Disconnected</span>
+                  </div>
+                  <p class="mini-card-body">Dynamic handshake over 9600-baud USB serial via Python bridge or Web Serial API.</p>
+                </div>
+
+                <!-- Status 3 -->
+                <div class="about-mini-card">
+                  <div class="mini-card-head">
+                    <h4 style="font-size: 0.85rem;">INA219 DC Sensor</h4>
+                    <span id="aboutStatusINA219" class="mini-badge installed">Detected (0x40)</span>
+                  </div>
+                  <p class="mini-card-body">I²C bus sensor probe confirmed at address 0x40 by firmware telemetry check.</p>
+                </div>
+
+                <!-- Status 4 -->
+                <div class="about-mini-card">
+                  <div class="mini-card-head">
+                    <h4 style="font-size: 0.85rem;">DS18B20 Temp Sensor</h4>
+                    <span id="aboutStatusDS18B20" class="mini-badge installed">Pin 7 Verified</span>
+                  </div>
+                  <p class="mini-card-body">1-Wire digital probe reporting real-time cell surface temperature with 4.7 k&Omega; pull-up.</p>
+                </div>
+
+                <!-- Status 5 -->
+                <div class="about-mini-card">
+                  <div class="mini-card-head">
+                    <h4 style="font-size: 0.85rem;">Live Data Streaming</h4>
+                    <span id="aboutStatusStreaming" class="mini-badge installed">1 Hz Telemetry</span>
+                  </div>
+                  <p class="mini-card-body">Real-time structured JSON parsing with watchdog timeouts and disconnect guards.</p>
+                </div>
+
+                <!-- Status 6 -->
+                <div class="about-mini-card">
+                  <div class="mini-card-head">
+                    <h4 style="font-size: 0.85rem;">OLED Local Display</h4>
+                    <span class="mini-badge optional">Optional / Planned</span>
+                  </div>
+                  <p class="mini-card-body">Optional hardware probe checks I²C address 0x3C/0x3D; does not impede web testing.</p>
+                </div>
+
+                <!-- Status 7 -->
+                <div class="about-mini-card">
+                  <div class="mini-card-head">
+                    <h4 style="font-size: 0.85rem;">Controlled-Load Testing</h4>
+                    <span class="mini-badge disabled">Disabled for Safety</span>
+                  </div>
+                  <p class="mini-card-body">MOSFET load switch held LOW by default until bench wiring and resistor ratings are validated.</p>
+                </div>
+
+                <!-- Status 8 -->
+                <div class="about-mini-card">
+                  <div class="mini-card-head">
+                    <h4 style="font-size: 0.85rem;">Battery Classification</h4>
+                    <span class="mini-badge installed">Operational</span>
+                  </div>
+                  <p class="mini-card-body">Documented baseline rules active for Li-ion, Li-Po, LiFePO4, Ni-MH, Ni-Cd, and Alkaline.</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- 8. FUTURE SCOPE CARD -->
+            <div id="about-card-future" class="about-card">
+              <div class="about-card-header">
+                <div class="about-badge-icon">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon></svg>
+                </div>
+                <div>
+                  <h3>Future Scope &amp; Planned Enhancements</h3>
+                  <p>Roadmap for upcoming capabilities, hardware revisions, and cloud diagnostics</p>
+                </div>
+              </div>
+
+              <div class="about-grid-3">
+                <div class="about-mini-card">
+                  <div class="mini-card-head">
+                    <div class="mini-card-title-group">
+                      <div class="mini-card-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg></div>
+                      <h4>Battery Test History</h4>
+                    </div>
+                    <span class="mini-badge installed">Implemented</span>
+                  </div>
+                  <p class="mini-card-body">
+                    Persistent browser local storage tracking screening dates, voltages, currents, and health results with keyword search.
+                  </p>
+                </div>
+
+                <div class="about-mini-card">
+                  <div class="mini-card-head">
+                    <div class="mini-card-title-group">
+                      <div class="mini-card-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg></div>
+                      <h4>CSV &amp; PDF Report Generation</h4>
+                    </div>
+                    <span class="mini-badge active-status">CSV Active • PDF Planned</span>
+                  </div>
+                  <p class="mini-card-body">
+                    RFC 4180 compliant CSV export currently operational. Formal printable PDF laboratory summary reports are in active development.
+                  </p>
+                </div>
+
+                <div class="about-mini-card">
+                  <div class="mini-card-head">
+                    <div class="mini-card-title-group">
+                      <div class="mini-card-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg></div>
+                      <h4>Multi-Session Comparison</h4>
+                    </div>
+                    <span class="mini-badge planned">Planned</span>
+                  </div>
+                  <p class="mini-card-body">
+                    Overlaying voltage sag curves from multiple cells on a single comparative canvas to rapidly rank and bin matched cells for battery packs.
+                  </p>
+                </div>
+
+                <div class="about-mini-card">
+                  <div class="mini-card-head">
+                    <div class="mini-card-title-group">
+                      <div class="mini-card-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="16" height="10" rx="2"></rect><line x1="22" y1="11" x2="22" y2="13"></line></svg></div>
+                      <h4>Additional Battery Profiles</h4>
+                    </div>
+                    <span class="mini-badge installed">Implemented</span>
+                  </div>
+                  <p class="mini-card-body">
+                    Support for 7 electrochemistries (Li-ion, Li-Po, LiFePO4, Ni-MH, Ni-Cd, Alkaline, and Lead-Acid) with dedicated cutoff benchmarks.
+                  </p>
+                </div>
+
+                <div class="about-mini-card">
+                  <div class="mini-card-head">
+                    <div class="mini-card-title-group">
+                      <div class="mini-card-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg></div>
+                      <h4>Calibration &amp; Trimming</h4>
+                    </div>
+                    <span class="mini-badge planned">Planned</span>
+                  </div>
+                  <p class="mini-card-body">
+                    Two-point software offset trimming for shunt resistor tolerance (0.1 &Omega; &plusmn;1%) and lead resistance compensation for high precision.
+                  </p>
+                </div>
+
+                <div class="about-mini-card">
+                  <div class="mini-card-head">
+                    <div class="mini-card-title-group">
+                      <div class="mini-card-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg></div>
+                      <h4>Advanced Diagnostic Graphs</h4>
+                    </div>
+                    <span class="mini-badge planned">Planned</span>
+                  </div>
+                  <p class="mini-card-body">
+                    Extended dynamic response plotting, dV/dt recovery rate analysis, and electrochemical impedance spectroscopy (EIS) approximation.
+                  </p>
+                </div>
+
+                <div class="about-mini-card">
+                  <div class="mini-card-head">
+                    <div class="mini-card-title-group">
+                      <div class="mini-card-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"></path></svg></div>
+                      <h4>Optional Cloud Data Storage</h4>
+                    </div>
+                    <span class="mini-badge planned">Planned</span>
+                  </div>
+                  <p class="mini-card-body">
+                    Secure MQTT/REST API telemetry sync to cloud repositories for centralized laboratory battery lifecycle tracking and fleet analytics.
+                  </p>
+                </div>
+
+                <div class="about-mini-card">
+                  <div class="mini-card-head">
+                    <div class="mini-card-title-group">
+                      <div class="mini-card-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg></div>
+                      <h4>Remote Monitoring &amp; Alerts</h4>
+                    </div>
+                    <span class="mini-badge planned">Planned</span>
+                  </div>
+                  <p class="mini-card-body">
+                    Browser notification alerts and webhook triggers when screening completes, cells fail cutoff thresholds, or thermal warnings arise.
+                  </p>
+                </div>
+
+                <div class="about-mini-card">
+                  <div class="mini-card-head">
+                    <div class="mini-card-title-group">
+                      <div class="mini-card-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><polyline points="17 11 19 13 23 9"></polyline></svg></div>
+                      <h4>Cell Sorting &amp; Grading</h4>
+                    </div>
+                    <span class="mini-badge planned">Planned</span>
+                  </div>
+                  <p class="mini-card-body">
+                    Automated grading algorithm binning second-life 18650 cells into Grade A (Power), Grade B (Energy), or Recycle based on R<sub>int</sub> and sag.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <!-- 9. PROJECT INFORMATION CARD -->
+            <div id="about-card-info" class="about-card">
+              <div class="about-card-header">
+                <div class="about-badge-icon">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                </div>
+                <div>
+                  <h3>Project Information</h3>
+                  <p>Academic, technical, and engineering specification summary</p>
+                </div>
+              </div>
+
+              <div class="proj-info-grid">
+                <div class="proj-info-cell">
+                  <span class="proj-info-label">Project Name</span>
+                  <span class="proj-info-value">SmartCell</span>
+                  <span class="proj-info-subtext">Smart Battery Screening &amp; Monitoring System</span>
+                </div>
+
+                <div class="proj-info-cell">
+                  <span class="proj-info-label">Category</span>
+                  <span class="proj-info-value">Embedded Systems &amp; IoT</span>
+                  <span class="proj-info-subtext">Hardware-to-Software Instrumentation</span>
+                </div>
+
+                <div class="proj-info-cell">
+                  <span class="proj-info-label">Controller</span>
+                  <span class="proj-info-value">Arduino Uno</span>
+                  <span class="proj-info-subtext">ATmega328P @ 16 MHz (9600 Baud Serial)</span>
+                </div>
+
+                <div class="proj-info-cell">
+                  <span class="proj-info-label">Project Type</span>
+                  <span class="proj-info-value">Educational Prototype</span>
+                  <span class="proj-info-subtext">Engineering Laboratory Screening Tool</span>
+                </div>
+
+                <div class="proj-info-cell">
+                  <span class="proj-info-label">Development Status</span>
+                  <span class="proj-info-value">Prototype Under Development</span>
+                  <span class="proj-info-subtext">Version 2.1 (Active Bench Validation)</span>
+                </div>
+
+                <div class="proj-info-cell">
+                  <span class="proj-info-label">Developer / Team</span>
+                  <span class="proj-info-value">[Student / Engineering Team]</span>
+                  <span class="proj-info-subtext">Editable Team Placeholder</span>
+                </div>
+
+                <div class="proj-info-cell">
+                  <span class="proj-info-label">Institution</span>
+                  <span class="proj-info-value">[University / Department of EEE]</span>
+                  <span class="proj-info-subtext">Editable Institutional Placeholder</span>
+                </div>
+
+                <div class="proj-info-cell">
+                  <span class="proj-info-label">Academic Cycle</span>
+                  <span class="proj-info-value">Academic Year 2026</span>
+                  <span class="proj-info-subtext">Capstone &amp; Laboratory Screening Project</span>
+                </div>
+              </div>
+
+              <p style="font-size: 0.775rem; color: var(--text-dim); margin-top: 1.25rem; text-align: center;">
+                SmartCell is an educational and laboratory battery screening system. No commercial certifications or official endorsements are claimed.
+              </p>
+            </div>
+
+          </div>
+        </section>
+
+      </main>
+    </div>
+
+  </div>
+
+  <!-- Detailed Test Inspection Modal -->
+  <div id="testDetailModal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modalTestTitle">
+    <div class="modal-dialog">
+      <h3 id="modalTestTitle" class="modal-title">Test Record Inspection</h3>
+      <div id="modalTestBody" style="font-size: 0.825rem; color: var(--text-muted); line-height: 1.5;">
+        <!-- Details injected dynamically -->
+      </div>
+      <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+          <button id="btnModalExportCsv" class="btn btn-secondary" style="font-size: 0.775rem; padding: 0.35rem 0.65rem;" title="Download this test record as CSV">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+            CSV
+          </button>
+          <button id="btnModalExportJson" class="btn btn-secondary" style="font-size: 0.775rem; padding: 0.35rem 0.65rem;" title="Download this test record as JSON">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>
+            JSON
+          </button>
+          <button id="btnModalPrintCert" class="btn btn-secondary" style="font-size: 0.775rem; padding: 0.35rem 0.65rem;" title="Print official test certificate or save as PDF">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+            Print Certificate
+          </button>
+        </div>
+        <button id="btnCloseModal" class="btn btn-secondary">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Interactive Component Wiring Guide Modal -->
+  <div id="wiringGuideModal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modalWiringTitle">
+    <div class="modal-dialog" style="max-width: 680px; max-height: 90vh; overflow-y: auto;">
+      <div style="display: flex; align-items: flex-start; justify-content: space-between; border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem; margin-bottom: 1rem;">
+        <div>
+          <h3 id="modalWiringTitle" class="modal-title" style="margin-bottom: 0.2rem;">Component Wiring Guide</h3>
+          <p id="modalWiringSubtitle" style="font-size: 0.775rem; color: var(--text-muted);">Step-by-step pinout and hardware checklist</p>
+        </div>
+        <button id="btnCloseWiringModalX" class="btn btn-secondary" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">&times;</button>
+      </div>
+
+      <div id="modalWiringContent">
+        <!-- Dynamic wiring diagram, table, checklist, and warnings rendered here -->
+      </div>
+
+      <div class="modal-footer" style="border-top: 1px solid var(--border-color); padding-top: 0.85rem; margin-top: 1rem;">
+        <button id="btnCloseWiringModal" class="btn btn-secondary">
+          &larr; Back to Connections
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Application Main Controller -->
+  <script type="module" src="./src/main.js"></script>
+</body>
+</html>
