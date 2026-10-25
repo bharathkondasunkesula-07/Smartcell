@@ -1,0 +1,28 @@
+{
+  "name": "smartcell",
+  "version": "1.0.0",
+  "description": "Smart Battery Monitoring & Analysis Dashboard for Arduino Uno + INA219 via Web Serial API",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "start": "powershell -ExecutionPolicy Bypass -File ./server.ps1"
+  },
+  "keywords": [
+    "battery-monitoring",
+    "web-serial-api",
+    "arduino-uno",
+    "ina219",
+    "chartjs",
+    "lipo-analysis"
+  ],
+  "author": "SmartCell Engineering Team",
+  "license": "MIT",
+  "devDependencies": {
+    "vite": "^5.4.0"
+  },
+  "dependencies": {
+    "chart.js": "^4.4.4"
+  }
+}
